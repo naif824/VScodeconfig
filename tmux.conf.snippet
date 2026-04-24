@@ -1,0 +1,30 @@
+# --- VScodeconfig: tmux <-> VS Code tab integration (managed block) ---
+
+set -g mouse on
+set -g history-limit 200000
+
+# Push tmux session name to the outer terminal (VS Code tab label).
+# Per-client, so every VS Code terminal tab shows its own session name.
+set -g set-titles on
+set -g set-titles-string '#S'
+
+# Prevent programs inside panes (like Claude) from emitting OSC-2 titles
+# that tmux would re-broadcast to the wrong client's tty.
+set -g allow-rename off
+
+# Auto-regenerate VS Code tasks.json whenever tmux sessions change.
+set-hook -g session-created 'run-shell "bash $HOME/.vscodeconfig/scripts/gen-tasks.sh >/dev/null 2>&1 &"'
+set-hook -g session-closed  'run-shell "bash $HOME/.vscodeconfig/scripts/gen-tasks.sh >/dev/null 2>&1 &"'
+
+# Survive reboot: tmux-resurrect saves sessions; continuum auto-restores on server start.
+# Conversation IDs are replayed via the tasks.json fallback (claude --resume <id>),
+# so Claude sessions survive even if resurrect fails.
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @continuum-restore 'on'
+set -g @resurrect-processes 'claude ssh'
+set -g @resurrect-capture-pane-contents 'on'
+
+run '~/.tmux/plugins/tpm/tpm'
+# --- /VScodeconfig ---

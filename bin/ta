@@ -1,0 +1,21 @@
+#!/bin/bash
+# ta — attach to an existing tmux session (switches client if already inside tmux).
+# Usage: ta <session-name>
+
+if [ -z "$1" ]; then
+  echo "Usage: ta <session-name>"
+  tmux list-sessions 2>/dev/null
+  exit 1
+fi
+
+if ! tmux has-session -t "=$1" 2>/dev/null; then
+  echo "Session '$1' not found. Available:"
+  tmux list-sessions 2>/dev/null
+  exit 1
+fi
+
+if [ -n "$TMUX" ]; then
+  tmux switch-client -t "$1"
+else
+  tmux attach -t "$1"
+fi

@@ -1,0 +1,19 @@
+#!/bin/bash
+# tk — kill a tmux session and sync VS Code tasks.
+# Usage: tk <session-name>
+
+if [ -z "$1" ]; then
+  echo "Usage: tk <session-name>"
+  tmux list-sessions 2>/dev/null
+  exit 1
+fi
+
+SCRIPTS="$HOME/.vscodeconfig/scripts"
+
+if tmux kill-session -t "$1" 2>/dev/null; then
+  bash "$SCRIPTS/gen-tasks.sh" >/dev/null 2>&1
+  echo "Killed '$1' and updated VS Code tasks"
+else
+  echo "Session '$1' not found"
+  exit 1
+fi

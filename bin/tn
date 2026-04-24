@@ -1,0 +1,25 @@
+#!/bin/bash
+# tn — create new tmux session, start Claude Code inside it, and sync VS Code tasks.
+# Usage: tn <session-name>
+
+if [ -z "$1" ]; then
+  echo "Usage: tn <session-name>"
+  exit 1
+fi
+
+NAME="$1"
+SCRIPTS="$HOME/.vscodeconfig/scripts"
+
+if tmux has-session -t "=$NAME" 2>/dev/null; then
+  echo "Session '$NAME' already exists — use: ta $NAME"
+  exit 1
+fi
+
+tmux new-session -d -s "$NAME" || { echo "tmux new-session failed"; exit 1; }
+tmux send-keys -t "$NAME" "claude --dangerously-skip-permissions" Enter
+
+# Regenerate VS Code tasks (this internally refreshes the session map too).
+# Backgrounded so we don't delay the attach — the cron + tmux hooks catch any race.
+( bash "$SCRIPTS/gen-tasks.sh" >/dev/null 2>&1 & )
+
+tmux attach -t "$NAME"
