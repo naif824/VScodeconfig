@@ -22,4 +22,5 @@ tmux send-keys -t "$NAME" "claude --dangerously-skip-permissions" Enter
 # Backgrounded so we don't delay the attach — the cron + tmux hooks catch any race.
 ( bash "$SCRIPTS/gen-tasks.sh" >/dev/null 2>&1 & )
 
+printf '\033]0;%s\007' "$NAME"
 tmux attach -t "$NAME"

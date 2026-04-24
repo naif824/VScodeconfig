@@ -14,6 +14,7 @@ if ! tmux has-session -t "=$1" 2>/dev/null; then
   exit 1
 fi
 
+printf '\033]0;%s\007' "$1"
 if [ -n "$TMUX" ]; then
   tmux switch-client -t "$1"
 else
