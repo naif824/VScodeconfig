@@ -24,9 +24,13 @@ All driven by three short commands: `tn` (new), `ta` (attach), `tk` (kill).
 
 ## Install
 
-> **Upgrading from v1.0.0?** Re-run `install.sh` — it now refreshes the
-> managed block in `~/.tmux.conf` (previous versions left it stale) and
-> reloads tmux for you. If existing tabs still don't rename, run
+> **Upgrading?** Re-run `install.sh`. It refreshes the managed block in
+> `~/.tmux.conf`, reloads tmux, and (v1.0.2+) writes workspace VS Code
+> settings to `$HOME/.vscode/settings.json` so tab rename + single-click
+> focus work over Remote-SSH with no Mac-side intervention (you'll see a
+> one-time "Trust this folder" prompt in VS Code).
+>
+> If existing tmux tabs still don't rename after upgrade, run
 > `tmux kill-server` once and start fresh with `tn <name>`.
 
 ```bash

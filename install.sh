@@ -30,6 +30,36 @@ echo "--> Installing worker scripts"
 cp "$SRC/scripts/"*.sh "$DEST/scripts/"
 chmod +x "$DEST/scripts/"*.sh
 
+echo "--> Merging workspace VS Code settings ($HOME/.vscode/settings.json)"
+# Window-scoped keys that make OSC-set tab titles + single-click focus work
+# over Remote-SSH without touching the Mac's User settings. Existing keys are
+# preserved; only the five we own get written.
+SETTINGS_FILE="$HOME/.vscode/settings.json"
+export SETTINGS_FILE
+python3 - <<'PY'
+import json, os
+path = os.environ["SETTINGS_FILE"]
+try:
+    with open(path) as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        data = {}
+except (FileNotFoundError, json.JSONDecodeError):
+    data = {}
+managed = {
+    "terminal.integrated.tabs.title": "${sequence}",
+    "terminal.integrated.tabs.description": "${task}${separator}${cwdFolder}",
+    "terminal.integrated.tabs.enabled": True,
+    "terminal.integrated.tabs.focusMode": "singleClick",
+}
+data.update(managed)
+os.makedirs(os.path.dirname(path), exist_ok=True)
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+print(f"    wrote {len(managed)} managed keys (preserved others)")
+PY
+
 echo "--> Installing commands (tn, ta, tk)"
 for cmd in tn ta tk; do
   cp "$SRC/bin/$cmd" "$BIN/$cmd"
