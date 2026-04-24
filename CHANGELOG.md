@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-04-24
+
+### Added
+- `install.sh` now writes workspace VS Code settings to
+  `$HOME/.vscode/settings.json` so Remote-SSH clients get correct tab
+  behavior without touching the Mac's User settings. Managed keys:
+  - `terminal.integrated.tabs.title = "${sequence}"` (honor OSC titles)
+  - `terminal.integrated.tabs.description`
+  - `terminal.integrated.tabs.enabled = true`
+  - `terminal.integrated.tabs.focusMode = "singleClick"` (auto-focus on
+    single click between terminal tabs)
+  Existing keys in `settings.json` are preserved.
+
+### Notes
+- First time the Mac user opens the workspace after this update, VS Code
+  will prompt once to **Trust** the folder. Click Trust.
+- One setting cannot be delivered server-side because it's
+  application-scoped: `terminal.integrated.enablePersistentSessions`.
+  It's optional polish (prevents VS Code from resurrecting ghost cached
+  terminals over real tmux tabs on window reload). Set to `false` in
+  Mac User settings if you want it.
+
 ## [1.0.1] - 2026-04-24
 
 ### Fixed
