@@ -39,12 +39,19 @@ done
 echo "--> Updating ~/.tmux.conf"
 touch "$TMUX_CONF"
 if grep -qF "$MARK" "$TMUX_CONF"; then
-  echo "    (managed block already present — leaving .tmux.conf alone)"
-else
-  echo "" >> "$TMUX_CONF"
-  cat "$SRC/tmux.conf.snippet" >> "$TMUX_CONF"
-  echo "    (appended managed block)"
+  awk '
+    /^# --- VScodeconfig:/ {skip=1}
+    !skip {print}
+    /^# --- \/VScodeconfig ---/ {skip=0; next}
+  ' "$TMUX_CONF" > "$TMUX_CONF.tmp" && mv "$TMUX_CONF.tmp" "$TMUX_CONF"
+  echo "    (removed old managed block)"
 fi
+echo "" >> "$TMUX_CONF"
+cat "$SRC/tmux.conf.snippet" >> "$TMUX_CONF"
+echo "    (appended fresh managed block)"
+
+# Reload so changes take effect without requiring kill-server
+tmux source-file "$TMUX_CONF" >/dev/null 2>&1 || true
 
 echo "--> Installing cron entry (every 5 min)"
 CRON_LINE="*/5 * * * * /bin/bash $DEST/scripts/gen-tasks.sh >/dev/null 2>&1"

@@ -24,6 +24,11 @@ All driven by three short commands: `tn` (new), `ta` (attach), `tk` (kill).
 
 ## Install
 
+> **Upgrading from v1.0.0?** Re-run `install.sh` — it now refreshes the
+> managed block in `~/.tmux.conf` (previous versions left it stale) and
+> reloads tmux for you. If existing tabs still don't rename, run
+> `tmux kill-server` once and start fresh with `tn <name>`.
+
 ```bash
 git clone https://github.com/naif824/VScodeconfig.git
 cd VScodeconfig
