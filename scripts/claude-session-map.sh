@@ -1,22 +1,21 @@
 #!/bin/bash
-# Maps tmux sessions -> Claude Code conversation IDs.
+# Maps tmux sessions -> agent (claude|codex) + conversation/session ID.
 # Output: $HOME/.claude/session-map.json
 #
-# Fixes vs. original:
-#  - Narrow process match: pgrep -P <pane_pid> -x claude  (exact, direct child only)
-#  - Atomic temp file via mktemp (no cross-run race on a fixed .tmp path)
-#  - JSON escaping via python (robust for any session name)
+# Each entry: { pid, agent, conversation_id, resume_cmd }
+# resume_cmd is what gen-tasks.sh runs as the cold-start fallback.
 
 set -u
 MAP_FILE="$HOME/.claude/session-map.json"
 SESSIONS_DIR="$HOME/.claude/sessions"
 HISTORY="$HOME/.claude/history.jsonl"
 PROJECTS_DIR="$HOME/.claude/projects"
+CODEX_SESSIONS_DIR="$HOME/.codex/sessions"
 
 mkdir -p "$(dirname "$MAP_FILE")"
 TMP="$(mktemp "${MAP_FILE}.XXXXXX")"
 
-export SESSIONS_DIR HISTORY PROJECTS_DIR TMP
+export SESSIONS_DIR HISTORY PROJECTS_DIR CODEX_SESSIONS_DIR TMP
 
 python3 - <<'PY'
 import json, os, re, subprocess, sys
@@ -25,8 +24,10 @@ tmp_file    = os.environ["TMP"]
 sess_dir    = os.environ["SESSIONS_DIR"]
 history     = os.environ["HISTORY"]
 projects    = os.environ["PROJECTS_DIR"]
+codex_dir   = os.environ["CODEX_SESSIONS_DIR"]
 
 UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+ROLLOUT_RE = re.compile(r"rollout-[0-9T:\-]+-([0-9a-f-]{36})\.jsonl$")
 
 def run(cmd):
     try:
@@ -48,6 +49,28 @@ def child_claude(pid):
     out = run(["pgrep", "-P", str(pid), "-x", "claude"])
     line = out.strip().split("\n")[0] if out.strip() else ""
     return line or None
+
+def child_codex(pid):
+    out = run(["pgrep", "-P", str(pid), "-x", "codex"])
+    line = out.strip().split("\n")[0] if out.strip() else ""
+    return line or None
+
+def codex_session_id(pid):
+    """Find the rollout UUID by inspecting open files of the running codex process."""
+    fd_dir = f"/proc/{pid}/fd"
+    try:
+        for fd in os.listdir(fd_dir):
+            try:
+                target = os.readlink(os.path.join(fd_dir, fd))
+            except OSError:
+                continue
+            if codex_dir in target:
+                m = ROLLOUT_RE.search(target)
+                if m:
+                    return m.group(1)
+    except OSError:
+        pass
+    return None
 
 def cmdline(pid):
     try:
@@ -103,12 +126,13 @@ def conv_from_history(started_at):
 
 result = {}
 for name in list_sessions():
-    entry = {"pid": None, "conversation_id": None, "resume_cmd": None}
+    entry = {"pid": None, "agent": None, "conversation_id": None, "resume_cmd": None}
     ppid = pane_pid(name)
     if ppid:
         cp = child_claude(ppid)
         if cp:
             entry["pid"] = int(cp)
+            entry["agent"] = "claude"
             conv = conv_from_cmdline(cp)
             if not conv:
                 sid, started = session_file(cp)
@@ -119,6 +143,19 @@ for name in list_sessions():
             if conv:
                 entry["conversation_id"] = conv
                 entry["resume_cmd"] = f"claude --dangerously-skip-permissions --resume {conv}"
+            else:
+                entry["resume_cmd"] = "claude --dangerously-skip-permissions"
+        else:
+            xp = child_codex(ppid)
+            if xp:
+                entry["pid"] = int(xp)
+                entry["agent"] = "codex"
+                conv = codex_session_id(xp)
+                if conv:
+                    entry["conversation_id"] = conv
+                    entry["resume_cmd"] = f"codex resume {conv} --yolo"
+                else:
+                    entry["resume_cmd"] = "codex --yolo"
     result[name] = entry
 
 with open(tmp_file, "w") as f:

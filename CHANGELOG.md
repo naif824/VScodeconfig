@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-05-02
+
+### Added
+- `tnx <name>` — new command. Same flow as `tn` but launches `codex --yolo`
+  inside the tmux session instead of `claude`.
+- Per-session agent detection in `claude-session-map.sh`. Each map entry now
+  includes an `agent` field (`claude` or `codex`) and a ready-to-run
+  `resume_cmd`. Codex sessions are matched by their direct `codex` child
+  process; the rollout UUID is recovered from `/proc/<pid>/fd/` so cold-start
+  resumes via `codex resume <id> --yolo`.
+- `gen-tasks.sh` now uses each entry's `resume_cmd`, so codex tabs cold-start
+  with `codex resume <id> --yolo` and claude tabs are unchanged.
+
+### Notes
+- `ta` and `tk` are agent-agnostic and work for codex sessions too.
+
 ## [1.0.2] - 2026-04-24
 
 ### Added

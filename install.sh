@@ -60,8 +60,8 @@ with open(path, "w") as f:
 print(f"    wrote {len(managed)} managed keys (preserved others)")
 PY
 
-echo "--> Installing commands (tn, ta, tk)"
-for cmd in tn ta tk; do
+echo "--> Installing commands (tn, tnx, ta, tk)"
+for cmd in tn tnx ta tk; do
   cp "$SRC/bin/$cmd" "$BIN/$cmd"
   chmod +x "$BIN/$cmd"
 done

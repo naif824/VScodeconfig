@@ -40,15 +40,11 @@ tasks, labels = [], []
 for name in sessions:
     labels.append(name)
     entry = smap.get(name, {}) or {}
-    cid   = entry.get("conversation_id")
 
     # The \033 and \007 stay as 4-char sequences in JSON; printf expands them at runtime.
     title = f"\\033]0;{name}\\007"
     q_name = shlex.quote(name)
-    if cid:
-        fallback = f"claude --dangerously-skip-permissions --resume {cid}"
-    else:
-        fallback = "claude --dangerously-skip-permissions"
+    fallback = entry.get("resume_cmd") or "claude --dangerously-skip-permissions"
     q_fb = shlex.quote(fallback)
 
     # Attach if tmux session exists; otherwise cold-start a new tmux session running the fallback.
