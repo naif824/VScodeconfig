@@ -20,7 +20,7 @@ Make VS Code's terminal behave like a persistent workspace:
 3. Close VS Code, reopen it → every tab reattaches automatically.
 4. Kill tmux or reboot the machine → tabs cold-start with `claude --resume <conversation-id>` so the conversation continues where it left off.
 
-All driven by three short commands: `tn` (new), `ta` (attach), `tk` (kill).
+All driven by four short commands: `tn` (new Claude), `tnx` (new Codex), `ta` (attach), `tk` (kill).
 
 ## Install
 
@@ -44,7 +44,8 @@ Idempotent. No sudo. No user-specific paths — everything resolves from `$HOME`
 ## Usage
 
 ```bash
-tn myproject     # new tmux session "myproject" with Claude Code running inside
+tn myproject     # new tmux session with `claude --dangerously-skip-permissions`
+tnx myproject    # new tmux session with `codex --yolo`
 ta myproject     # attach to an existing session (or switch-client if already in tmux)
 tk myproject     # kill the session and sync VS Code tasks
 ```

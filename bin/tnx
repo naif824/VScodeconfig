@@ -1,0 +1,24 @@
+#!/bin/bash
+# tnx — create new tmux session, start Codex inside it, and sync VS Code tasks.
+# Usage: tnx <session-name>
+
+if [ -z "$1" ]; then
+  echo "Usage: tnx <session-name>"
+  exit 1
+fi
+
+NAME="$1"
+SCRIPTS="$HOME/.vscodeconfig/scripts"
+
+if tmux has-session -t "=$NAME" 2>/dev/null; then
+  echo "Session '$NAME' already exists — use: ta $NAME"
+  exit 1
+fi
+
+tmux new-session -d -s "$NAME" || { echo "tmux new-session failed"; exit 1; }
+tmux send-keys -t "$NAME" "codex --yolo" Enter
+
+( bash "$SCRIPTS/gen-tasks.sh" >/dev/null 2>&1 & )
+
+printf '\033]0;%s\007' "$NAME"
+tmux attach -t "$NAME"
