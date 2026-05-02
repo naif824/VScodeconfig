@@ -2,7 +2,7 @@
 # tnx — create new tmux session, start Codex inside it, and sync VS Code tasks.
 # Usage: tnx <session-name>
 
-if [ -z "$1" ]; then
+if [ -z "${1:-}" ] || [[ "$1" == -* ]]; then
   echo "Usage: tnx <session-name>"
   exit 1
 fi
