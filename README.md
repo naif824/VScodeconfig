@@ -13,6 +13,9 @@ VScodeconfig turns your Remote-SSH terminal into a stable workspace:
 
 It works best with **VS Code** and **Cursor**. It should also work with forks that support VS Code-style `tasks.json`, workspace settings, integrated terminals, and OSC terminal titles.
 
+Using this with Claude, Gemini, Codex, or another AI assistant? See
+[`LLM.md`](LLM.md) for the agent-focused guide.
+
 ## Why This Exists
 
 AI coding sessions are valuable context. Losing the terminal tab usually means losing the visible conversation, even when logs still exist somewhere on disk.
@@ -256,6 +259,9 @@ Then remove the managed VScodeconfig block from `~/.tmux.conf`.
 - Generated files live in your home directory.
 - Workspace VS Code settings are written on the remote server, not your Mac user settings.
 - Claude/Codex launch commands are intentionally visible in generated `tasks.json`.
+
+For AI assistants modifying this repo, read [`LLM.md`](LLM.md) before changing
+the sync or session lifecycle.
 
 ## License
 
