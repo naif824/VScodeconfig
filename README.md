@@ -1,8 +1,11 @@
-# VScodeconfig
+# VScodeconfig: Persistent tmux sessions for VS Code, Cursor, Claude Code, and Codex
 
 [![test](https://github.com/naif824/VScodeconfig/actions/workflows/test.yml/badge.svg)](https://github.com/naif824/VScodeconfig/actions/workflows/test.yml)
 
 🚀 **Persistent AI coding terminals for VS Code, Cursor, and VS Code-compatible forks.**
+
+Keep Claude Code, Codex, Gemini-style agent terminals, and long-running shell
+work alive across Remote-SSH disconnects, editor reloads, and server restarts.
 
 VScodeconfig turns your Remote-SSH terminal into a stable workspace:
 
@@ -15,6 +18,10 @@ It works best with **VS Code** and **Cursor**. It should also work with forks th
 
 Using this with Claude, Gemini, Codex, or another AI assistant? See
 [`LLM.md`](LLM.md) for the agent-focused guide.
+
+Keywords: VS Code Remote SSH, Cursor IDE, tmux sessions, persistent terminal
+tabs, Claude Code, Codex CLI, Gemini CLI, AI coding agents, `tasks.json`,
+tmux-resurrect, tmux-continuum.
 
 ## Why This Exists
 

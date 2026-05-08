@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - `LLM.md`, a guide for Claude/Gemini/Codex users and AI assistants working
   with the repo.
+- Search-friendly README title, subtitle, and keyword line for GitHub
+  discovery.
 - `scripts/sync-state.sh` as the shared sync entrypoint for commands, tmux
   hooks, and cron. It regenerates editor tasks and saves tmux-resurrect state
   when available.
