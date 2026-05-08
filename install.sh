@@ -9,7 +9,7 @@
 #   $HOME/.vscodeconfig/scripts/*.sh       — worker scripts
 #   $HOME/.vscode/tasks.json               — auto-generated on first tmux session
 #   $HOME/.tmux.conf                       — appends a managed block (if missing)
-#   crontab                                — 5-min refresh of tasks.json
+#   crontab                                — 5-min refresh of tasks/resurrect state
 
 set -euo pipefail
 
@@ -84,10 +84,10 @@ echo "    (appended fresh managed block)"
 tmux source-file "$TMUX_CONF" >/dev/null 2>&1 || true
 
 echo "--> Installing cron entry (every 5 min)"
-CRON_LINE="*/5 * * * * /bin/bash $DEST/scripts/gen-tasks.sh >/dev/null 2>&1"
+CRON_LINE="*/5 * * * * /bin/bash $DEST/scripts/sync-state.sh >/dev/null 2>&1"
 # Strip any prior lines referencing either worker script, then append the one we want.
 ( crontab -l 2>/dev/null \
-    | grep -v -E 'gen-tasks\.sh|claude-session-map\.sh' || true
+    | grep -v -E 'sync-state\.sh|gen-tasks\.sh|claude-session-map\.sh' || true
   echo "$CRON_LINE"
 ) | crontab -
 

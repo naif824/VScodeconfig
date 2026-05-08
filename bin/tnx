@@ -18,7 +18,7 @@ fi
 tmux new-session -d -s "$NAME" || { echo "tmux new-session failed"; exit 1; }
 tmux send-keys -t "$NAME" "codex --yolo" Enter
 
-( bash "$SCRIPTS/gen-tasks.sh" >/dev/null 2>&1 & )
+( bash "$SCRIPTS/sync-state.sh" >/dev/null 2>&1 & )
 
 printf '\033]0;%s\007' "$NAME"
 tmux attach -t "$NAME"

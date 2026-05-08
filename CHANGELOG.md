@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `scripts/sync-state.sh` as the shared sync entrypoint for commands, tmux
+  hooks, and cron. It regenerates editor tasks and saves tmux-resurrect state
+  when available.
+- GitHub Actions workflow for shell syntax checks and behavior tests.
+- Lightweight behavior tests for stale task cleanup and kill/sync behavior.
+- Public-facing README refresh covering VS Code, Cursor, and compatible forks.
+
+### Changed
+- `gen-tasks.sh` now writes `tasks.json` atomically and uses a lock directory
+  to avoid concurrent writers.
+- `tn`, `tnx`, `tk`, tmux hooks, and cron now call the shared sync path.
+
+### Fixed
+- When no tmux sessions exist, `gen-tasks.sh` now clears `tasks.json` instead
+  of leaving stale auto-run tasks behind.
+- `tk` now saves tmux-resurrect state through `sync-state.sh`, so killed
+  sessions are less likely to return after reboot from an old snapshot.
+
 ## [1.1.1] - 2026-05-02
 
 ### Fixed

@@ -10,22 +10,31 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TASKS_FILE="${TASKS_FILE:-$HOME/.vscode/tasks.json}"
 MAP_FILE="$HOME/.claude/session-map.json"
+LOCK_DIR="${VSCODECONFIG_LOCK_DIR:-$HOME/.vscodeconfig/.sync-lock}"
 
 # Refresh the session map first
 bash "$SCRIPT_DIR/claude-session-map.sh" >/dev/null 2>&1 || true
 
-SESSIONS="$(tmux list-sessions -F '#{session_name}' 2>/dev/null | sort)"
-if [ -z "$SESSIONS" ]; then
-  echo "No tmux sessions — tasks.json left untouched"
+mkdir -p "$(dirname "$LOCK_DIR")"
+if mkdir "$LOCK_DIR" 2>/dev/null; then
+  trap 'rmdir "$LOCK_DIR"' EXIT
+else
+  echo "Another VScodeconfig sync is running"
   exit 0
 fi
 
 mkdir -p "$(dirname "$TASKS_FILE")"
 
+SESSIONS="$(tmux list-sessions -F '#{session_name}' 2>/dev/null | sort)"
+if [ -z "$SESSIONS" ]; then
+  SESSION_COUNT=0
+else
+  SESSION_COUNT="$(printf '%s\n' "$SESSIONS" | wc -l | tr -d ' ')"
+fi
 export TASKS_FILE MAP_FILE SESSIONS
 
 python3 - <<'PY'
-import json, os, shlex
+import json, os, shlex, tempfile
 
 tasks_file = os.environ["TASKS_FILE"]
 map_file   = os.environ["MAP_FILE"]
@@ -63,17 +72,22 @@ for name in sessions:
         "presentation": {"reveal": "silent", "panel": "dedicated"},
     })
 
-tasks.append({
-    "label": "Open Primary Sessions",
-    "dependsOn": labels,
-    "dependsOrder": "parallel",
-    "runOptions": {"runOn": "folderOpen"},
-    "problemMatcher": [],
-})
+if labels:
+    tasks.append({
+        "label": "Open Primary Sessions",
+        "dependsOn": labels,
+        "dependsOrder": "parallel",
+        "runOptions": {"runOn": "folderOpen"},
+        "problemMatcher": [],
+    })
 
 doc = {"version": "2.0.0", "tasks": tasks}
-with open(tasks_file, "w") as f:
+directory = os.path.dirname(tasks_file) or "."
+fd, tmp = tempfile.mkstemp(prefix=".tasks.", suffix=".json", dir=directory)
+with os.fdopen(fd, "w") as f:
     json.dump(doc, f, indent=2)
+    f.write("\n")
+os.replace(tmp, tasks_file)
 PY
 
-echo "Generated $TASKS_FILE with $(printf '%s\n' "$SESSIONS" | wc -l) sessions"
+echo "Generated $TASKS_FILE with $SESSION_COUNT sessions"

@@ -11,8 +11,8 @@ fi
 SCRIPTS="$HOME/.vscodeconfig/scripts"
 
 if tmux kill-session -t "$1" 2>/dev/null; then
-  bash "$SCRIPTS/gen-tasks.sh" >/dev/null 2>&1
-  echo "Killed '$1' and updated VS Code tasks"
+  bash "$SCRIPTS/sync-state.sh" >/dev/null 2>&1
+  echo "Killed '$1' and synced VS Code tasks"
 else
   echo "Session '$1' not found"
   exit 1
