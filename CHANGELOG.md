@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   exited or killed.
 
 ### Added
+- `tclean`, a dry-run-first cleanup command for old Cursor/VS Code persistent
+  task shells that still contain the obsolete `tmux attach ... || tmux new-session ...` fallback.
 - `LLM.md`, a guide for Claude/Gemini/Codex users and AI assistants working
   with the repo.
 - Search-friendly README title, subtitle, and keyword line for GitHub

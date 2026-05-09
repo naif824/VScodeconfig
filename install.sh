@@ -5,7 +5,7 @@
 # Idempotent: safe to re-run.
 #
 # Layout after install:
-#   $HOME/.local/bin/{tn,tnx,ta,tk}        - shell commands
+#   $HOME/.local/bin/{tn,tnx,ta,tk,tclean} - shell commands
 #   $HOME/.vscodeconfig/scripts/*.sh       - worker scripts
 #   $HOME/.vscode/tasks.json               - auto-generated from live tmux sessions
 #   $HOME/.tmux.conf                       - appends a managed block (if missing)
@@ -61,8 +61,8 @@ with open(path, "w") as f:
 print(f"    wrote {len(managed)} managed keys (preserved others)")
 PY
 
-echo "--> Installing commands (tn, tnx, ta, tk)"
-for cmd in tn tnx ta tk; do
+echo "--> Installing commands (tn, tnx, ta, tk, tclean)"
+for cmd in tn tnx ta tk tclean; do
   cp "$SRC/bin/$cmd" "$BIN/$cmd"
   chmod +x "$BIN/$cmd"
 done

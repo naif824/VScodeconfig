@@ -106,8 +106,44 @@ for task in doc["tasks"]:
 PY
 }
 
+
+test_tclean_detects_old_editor_task_shells() {
+  local work="$TMP_ROOT/tclean-detect"
+  mkdir -p "$work"
+  cat > "$work/ps.txt" <<'EOF'
+100 1 /home/ft/.cursor-server/bin/node out/bootstrap-fork --type=ptyHost
+200 100 /bin/bash -c printf '\033]0;admin\007'; tmux attach -t admin 2>/dev/null || tmux new-session -s admin 'claude --dangerously-skip-permissions'
+300 100 /bin/bash -c printf '\033]0;aziz\007'; tmux has-session -t =aziz 2>/dev/null && tmux attach -t =aziz
+400 1 /bin/bash -c printf '\033]0;manual\007'; tmux attach -t manual 2>/dev/null || tmux new-session -s manual 'claude --dangerously-skip-permissions'
+EOF
+
+  VSCODECONFIG_PS_FILE="$work/ps.txt" \
+    bash "$ROOT/scripts/clean-stuck-terminals.sh" --dry-run > "$work/out.txt"
+
+  grep -q '^200 100 admin ' "$work/out.txt" || fail "tclean did not report old editor task shell"
+  grep -q 'Dry run only' "$work/out.txt" || fail "tclean did not stay in dry-run mode"
+  ! grep -q '^300 ' "$work/out.txt" || fail "tclean reported current attach-only task"
+  ! grep -q '^400 ' "$work/out.txt" || fail "tclean reported non-editor shell"
+}
+
+test_tclean_no_matches() {
+  local work="$TMP_ROOT/tclean-none"
+  mkdir -p "$work"
+  cat > "$work/ps.txt" <<'EOF'
+100 1 /home/ft/.cursor-server/bin/node out/bootstrap-fork --type=ptyHost
+300 100 /bin/bash -c printf '\033]0;aziz\007'; tmux has-session -t =aziz 2>/dev/null && tmux attach -t =aziz
+EOF
+
+  VSCODECONFIG_PS_FILE="$work/ps.txt" \
+    bash "$ROOT/scripts/clean-stuck-terminals.sh" --dry-run > "$work/out.txt"
+
+  grep -q 'No stale pre-v1.2.1 editor task shells found.' "$work/out.txt" || fail "tclean no-match message missing"
+}
+
 test_gen_tasks_clears_stale_file_when_no_sessions
 test_tk_syncs_resurrect_after_kill
 test_gen_tasks_writes_valid_tasks_for_sessions
+test_tclean_detects_old_editor_task_shells
+test_tclean_no_matches
 
 echo "All tests passed"

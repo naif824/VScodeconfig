@@ -39,13 +39,14 @@ This repo fixes the annoying parts:
 
 ## What You Get
 
-Four commands:
+Five commands:
 
 ```bash
 tn myproject      # new tmux session running Claude Code
 tnx myproject     # new tmux session running Codex
 ta myproject      # attach/switch to an existing session
 tk myproject      # kill a session and sync editor restore state
+tclean            # show old stuck editor task shells, dry-run by default
 ```
 
 When your editor opens over Remote SSH, VScodeconfig generates tasks that reattach every live tmux session as its own terminal tab.
@@ -115,6 +116,7 @@ Main pieces:
 - `bin/tnx` creates a new tmux session and starts `codex --yolo`.
 - `bin/ta` attaches to a session, or switches clients if already inside tmux.
 - `bin/tk` kills a session and syncs editor tasks + tmux-resurrect state.
+- `bin/tclean` finds or kills old pre-v1.2.1 Cursor/VS Code task shells that still contain `tmux attach ... || tmux new-session ...`.
 - `scripts/gen-tasks.sh` writes `~/.vscode/tasks.json` from the current tmux session list.
 - Generated editor tasks are attach-only. They do not run `tmux new-session`,
   so old Cursor/VS Code persistent terminal records cannot recreate a session
@@ -193,6 +195,7 @@ task exits instead of recreating the tmux session.
   tnx
   ta
   tk
+  tclean
 
 ~/.vscodeconfig/scripts/
   gen-tasks.sh
@@ -249,6 +252,20 @@ Check whether a removed session is still scheduled to reopen:
 grep SESSION_NAME ~/.vscode/tasks.json
 ```
 
+Find old editor persistent task shells that still carry the obsolete create fallback:
+
+```bash
+tclean
+```
+
+If it reports stale pre-v1.2.1 shells, you can remove only those wrappers with:
+
+```bash
+tclean --kill
+```
+
+This does not kill normal tmux sessions or current attach-only tasks.
+
 Install tmux plugins from inside tmux:
 
 ```text
@@ -260,7 +277,7 @@ Default tmux prefix is `Ctrl+b`.
 ## Uninstall
 
 ```bash
-rm -f ~/.local/bin/{tn,tnx,ta,tk}
+rm -f ~/.local/bin/{tn,tnx,ta,tk,tclean}
 rm -rf ~/.vscodeconfig
 rm -f ~/.vscode/tasks.json
 crontab -l | grep -v -E 'sync-state\.sh|gen-tasks\.sh|claude-session-map\.sh' | crontab -

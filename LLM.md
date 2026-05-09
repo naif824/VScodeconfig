@@ -33,6 +33,7 @@ tn name    # create a tmux session and start Claude Code
 tnx name   # create a tmux session and start Codex
 ta name    # attach/switch to an existing tmux session
 tk name    # kill a tmux session and sync generated state
+tclean     # inspect old pre-v1.2.1 editor task shells, dry-run by default
 ```
 
 Session names must not be empty and must not start with `-`.
@@ -44,7 +45,9 @@ bin/tn                         # new Claude session
 bin/tnx                        # new Codex session
 bin/ta                         # attach/switch session
 bin/tk                         # kill session and sync state
+bin/tclean                     # inspect/kill stale old editor task shells
 scripts/gen-tasks.sh           # writes ~/.vscode/tasks.json
+scripts/clean-stuck-terminals.sh # detects old attach-or-create task shells
 scripts/sync-state.sh          # shared sync entrypoint
 tmux.conf.snippet              # tmux hooks, titles, resurrect/continuum
 install.sh                     # idempotent installer
@@ -117,6 +120,12 @@ Check whether a removed session is still scheduled to reopen:
 grep SESSION_NAME ~/.vscode/tasks.json
 ```
 
+Check for old Cursor/VS Code pty task shells that still contain `tmux attach ... || tmux new-session ...`:
+
+```bash
+tclean
+```
+
 If a session comes back after reboot, inspect tmux-resurrect:
 
 ```bash
@@ -127,6 +136,7 @@ grep -R SESSION_NAME ~/.tmux/resurrect 2>/dev/null
 
 - Prefer `tk <name>` over raw `tmux kill-session -t <name>`.
 - After any manual tmux session change, run `sync-state.sh`.
+- If fresh sessions appear after a repo upgrade, run `tclean` and inspect old pre-v1.2.1 editor task shells before changing tmux logic.
 - Never edit `~/.vscode/tasks.json` directly as the primary fix; regenerate it.
 - Never hardcode a user's home path, hostname, token, API key, or personal
   machine details into repo files.

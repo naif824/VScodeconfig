@@ -1,0 +1,6 @@
+#!/bin/bash
+# tclean - inspect or kill stale editor task shells that still contain the old
+# attach-or-create fallback.
+
+SCRIPTS="$HOME/.vscodeconfig/scripts"
+exec bash "$SCRIPTS/clean-stuck-terminals.sh" "$@"
