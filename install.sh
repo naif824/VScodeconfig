@@ -1,15 +1,15 @@
 #!/bin/bash
-# VScodeconfig installer — sets up tmux <-> VS Code tab integration with
-# Claude Code session-resume continuity.
+# VScodeconfig installer - sets up tmux <-> VS Code/Cursor tab integration
+# backed by named tmux sessions.
 #
 # Idempotent: safe to re-run.
 #
 # Layout after install:
-#   $HOME/.local/bin/{tn,ta,tk}            — shell commands
-#   $HOME/.vscodeconfig/scripts/*.sh       — worker scripts
-#   $HOME/.vscode/tasks.json               — auto-generated on first tmux session
-#   $HOME/.tmux.conf                       — appends a managed block (if missing)
-#   crontab                                — 5-min refresh of tasks/resurrect state
+#   $HOME/.local/bin/{tn,tnx,ta,tk}        - shell commands
+#   $HOME/.vscodeconfig/scripts/*.sh       - worker scripts
+#   $HOME/.vscode/tasks.json               - auto-generated from live tmux sessions
+#   $HOME/.tmux.conf                       - appends a managed block (if missing)
+#   crontab                                - 5-min refresh of tasks/resurrect state
 
 set -euo pipefail
 
@@ -24,9 +24,10 @@ echo "    package:   $SRC"
 echo "    dest:      $DEST"
 echo "    bin:       $BIN"
 
-mkdir -p "$DEST/scripts" "$BIN" "$HOME/.vscode" "$HOME/.claude"
+mkdir -p "$DEST/scripts" "$BIN" "$HOME/.vscode"
 
 echo "--> Installing worker scripts"
+rm -f "$DEST/scripts/claude-session-map.sh"
 cp "$SRC/scripts/"*.sh "$DEST/scripts/"
 chmod +x "$DEST/scripts/"*.sh
 

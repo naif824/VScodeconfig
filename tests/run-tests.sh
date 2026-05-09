@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TMP_ROOT="$(mktemp -d)"
+TMP_ROOT="$(mktemp -d "$ROOT/.tmp-tests.XXXXXX")"
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
 fail() {
@@ -26,6 +26,9 @@ case "$1" in
     ;;
   list-panes)
     printf '12345\n'
+    ;;
+  has-session)
+    exit 0
     ;;
   kill-session)
     printf '%s\n' "$*" >> "${TMUX_FAKE_KILLS:?}"
@@ -93,6 +96,13 @@ import json, sys
 doc = json.load(open(sys.argv[1]))
 labels = [task["label"] for task in doc["tasks"]]
 assert labels == ["alpha", "beta", "Open Primary Sessions"], labels
+for task in doc["tasks"]:
+    if task["label"] == "Open Primary Sessions":
+        continue
+    cmd = task["command"]
+    assert "tmux has-session" in cmd, cmd
+    assert "tmux attach" in cmd, cmd
+    assert "tmux new-session" not in cmd, cmd
 PY
 }
 

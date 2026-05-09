@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Generated VS Code/Cursor auto-open tasks are now attach-only. They no longer
+  run `tmux new-session` when `tmux attach` fails, preventing stale/orphan
+  Cursor persistent terminal records from recreating sessions the user already
+  exited or killed.
+
 ### Added
 - `LLM.md`, a guide for Claude/Gemini/Codex users and AI assistants working
   with the repo.
@@ -20,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Public-facing README refresh covering VS Code, Cursor, and compatible forks.
 
 ### Changed
+- Removed the old `claude-session-map.sh` resume fallback path. Editor auto-open
+  tasks now only attach to live tmux sessions; `tn` and `tnx` are the creation
+  path.
 - `gen-tasks.sh` now writes `tasks.json` atomically and uses a lock directory
   to avoid concurrent writers.
 - `tn`, `tnx`, `tk`, tmux hooks, and cron now call the shared sync path.

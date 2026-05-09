@@ -11,8 +11,8 @@ VScodeconfig turns your Remote-SSH terminal into a stable workspace:
 
 - one named terminal tab
 - one `tmux` session
-- one Claude Code or Codex conversation
-- automatic restore after editor reloads, SSH disconnects, and server restarts
+- one Claude Code, Codex, or shell workflow
+- automatic reattach after editor reloads, SSH disconnects, and server restarts
 
 It works best with **VS Code** and **Cursor**. It should also work with forks that support VS Code-style `tasks.json`, workspace settings, integrated terminals, and OSC terminal titles.
 
@@ -34,6 +34,7 @@ This repo fixes the annoying parts:
 - 🔁 **Reload VS Code/Cursor and your tabs come back**
 - 🔌 **Disconnect SSH and reconnect without losing your workspace**
 - 🧯 **Kill/remove a session and it stays removed**
+- 🚫 **Stale editor terminals cannot recreate deleted tmux sessions**
 - 🛠️ **Everything is plain shell, tmux, tasks.json, and workspace settings**
 
 ## What You Get
@@ -85,7 +86,7 @@ Close the editor window, reconnect, and the `demo` terminal tab should come back
 - Claude Code CLI on `PATH` for `tn`
 - Codex CLI on `PATH` for `tnx`
 
-The resume mapper uses Linux `/proc/<pid>/...`, so the full Claude/Codex resume behavior is designed for Linux Remote-SSH hosts.
+The tmux/session lifecycle is designed for Linux Remote-SSH hosts.
 
 ## How It Works
 
@@ -114,8 +115,10 @@ Main pieces:
 - `bin/tnx` creates a new tmux session and starts `codex --yolo`.
 - `bin/ta` attaches to a session, or switches clients if already inside tmux.
 - `bin/tk` kills a session and syncs editor tasks + tmux-resurrect state.
-- `scripts/claude-session-map.sh` maps tmux sessions to Claude/Codex resume commands.
 - `scripts/gen-tasks.sh` writes `~/.vscode/tasks.json` from the current tmux session list.
+- Generated editor tasks are attach-only. They do not run `tmux new-session`,
+  so old Cursor/VS Code persistent terminal records cannot recreate a session
+  after you intentionally exited or killed it.
 - `scripts/sync-state.sh` is the single sync entrypoint used by commands, hooks, and cron.
 - `tmux.conf.snippet` wires tmux hooks, terminal titles, tmux-resurrect, and tmux-continuum.
 
@@ -128,6 +131,11 @@ VScodeconfig syncs in three ways:
 - ⏱️ **Cron fallback** every 5 minutes
 
 `gen-tasks.sh` writes `tasks.json` atomically and clears stale tasks when there are no live tmux sessions, so old tabs do not come back after you intentionally remove them.
+
+Auto-open tasks are intentionally **attach-only**. `tn` and `tnx` are the only
+commands that create sessions. This prevents Cursor/VS Code from reviving an
+old persistent terminal task and recreating a tmux session that you already
+closed.
 
 `sync-state.sh` also saves tmux-resurrect state when available, so killed sessions do not reappear after reboot from an old resurrect snapshot.
 
@@ -174,6 +182,9 @@ grep myproject ~/.vscode/tasks.json
 
 If the name is gone from both, it will not be reopened.
 
+If Cursor/VS Code revives an old terminal process after the session is gone, the
+task exits instead of recreating the tmux session.
+
 ## Installed Layout
 
 ```text
@@ -184,13 +195,11 @@ If the name is gone from both, it will not be reopened.
   tk
 
 ~/.vscodeconfig/scripts/
-  claude-session-map.sh
   gen-tasks.sh
   sync-state.sh
 
 ~/.vscode/tasks.json
 ~/.vscode/settings.json
-~/.claude/session-map.json
 ~/.tmux.conf
 ```
 
@@ -253,7 +262,7 @@ Default tmux prefix is `Ctrl+b`.
 ```bash
 rm -f ~/.local/bin/{tn,tnx,ta,tk}
 rm -rf ~/.vscodeconfig
-rm -f ~/.vscode/tasks.json ~/.claude/session-map.json
+rm -f ~/.vscode/tasks.json
 crontab -l | grep -v -E 'sync-state\.sh|gen-tasks\.sh|claude-session-map\.sh' | crontab -
 ```
 

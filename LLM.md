@@ -44,7 +44,6 @@ bin/tn                         # new Claude session
 bin/tnx                        # new Codex session
 bin/ta                         # attach/switch session
 bin/tk                         # kill session and sync state
-scripts/claude-session-map.sh  # maps sessions to resume commands
 scripts/gen-tasks.sh           # writes ~/.vscode/tasks.json
 scripts/sync-state.sh          # shared sync entrypoint
 tmux.conf.snippet              # tmux hooks, titles, resurrect/continuum
@@ -57,7 +56,6 @@ Generated user files:
 ```text
 ~/.vscode/tasks.json
 ~/.vscode/settings.json
-~/.claude/session-map.json
 ~/.tmux.conf
 ~/.tmux/resurrect/
 ```
@@ -86,6 +84,12 @@ The sync path is triggered by:
 
 Do not add new code paths that update only `tasks.json` and skip
 `sync-state.sh`, unless there is a specific reason.
+
+Generated `tasks.json` tasks must be **attach-only**. They may check
+`tmux has-session` and attach, but they must not run `tmux new-session`.
+Cursor/VS Code can revive old persistent task terminals after a user has
+properly exited a tmux session; a create fallback would bring deleted sessions
+back.
 
 ## Troubleshooting Checklist
 
@@ -129,6 +133,8 @@ grep -R SESSION_NAME ~/.tmux/resurrect 2>/dev/null
 - Keep startup commands configurable or clearly documented when adding new
   agents.
 - Preserve the invariant: generated tasks reflect live tmux sessions.
+- Preserve the invariant: only `tn`/`tnx` create sessions; generated editor
+  tasks only attach.
 
 ## Adding Another Agent Command
 
@@ -143,7 +149,7 @@ To add a command for another agent, copy the shape of `bin/tnx`:
 7. Attach to the tmux session.
 
 For example, a future Gemini command should use the same lifecycle and only
-change the agent startup command and resume mapping logic.
+change the agent startup command.
 
 ## Testing
 
