@@ -1,0 +1,10 @@
+#!/bin/bash
+# tnkimi — new tmux session running an interactive Kimi K3 REPL (via Kimi Code CLI).
+# Usage: tnkimi <session-name>
+if [ -z "${1:-}" ] || [[ "$1" == -* ]]; then echo "Usage: tnkimi <session-name>"; exit 1; fi
+NAME="$1"
+if tmux has-session -t "=$NAME" 2>/dev/null; then echo "Session '$NAME' exists — use: ta $NAME"; exit 1; fi
+tmux new-session -d -s "$NAME" || { echo "tmux new-session failed"; exit 1; }
+tmux send-keys -t "$NAME" "~/.kimi-code/bin/kimi --model moonshotai/kimi-k3" Enter
+printf '\033]0;%s\007' "$NAME"
+tmux attach -t "$NAME"
