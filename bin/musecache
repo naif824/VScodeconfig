@@ -1,0 +1,52 @@
+#!/bin/bash
+# musecache — cache hit-rate of your most recent Codex session (esp. Muse via tnm).
+# Usage: musecache        (latest session)
+#        musecache muse   (latest session that used muse-spark-1.1)
+FILTER="${1:-}"
+SESS_DIR="$HOME/.codex/sessions"
+pick() {
+  find "$SESS_DIR" -name 'rollout-*.jsonl' -printf '%T@ %p\n' 2>/dev/null | sort -rn | while read -r _ f; do
+    if [ -z "$FILTER" ] || grep -qi "$FILTER" "$f" 2>/dev/null; then echo "$f"; return; fi
+  done
+}
+F=$(pick)
+[ -z "$F" ] && { echo "No matching session found."; exit 1; }
+python3 - "$F" <<'PY'
+import json, sys, re
+f = sys.argv[1]
+model = "unknown"; inp = cached = out = reason = 0
+for line in open(f, encoding="utf-8", errors="replace"):
+    if '"muse-spark' in line: model = "muse-spark-1.1"
+    elif '"model"' in line and model == "unknown":
+        m = re.search(r'"model"\s*:\s*"([^"]+)"', line)
+        if m: model = m.group(1)
+    for key, val in re.findall(r'"(input_tokens|cached_input_tokens|output_tokens|reasoning_output_tokens)"\s*:\s*(\d+)', line):
+        if key=="input_tokens": inp=max(inp,int(val)) if False else inp+int(val)
+# re-sum cleanly from last_token_usage / total to avoid double counting: take max totals
+tot_in=tot_cached=tot_out=0
+for line in open(f, encoding="utf-8", errors="replace"):
+    j=None
+    try: j=json.loads(line)
+    except: continue
+    def walk(o):
+        global tot_in,tot_cached,tot_out
+        if isinstance(o,dict):
+            if 'input_tokens' in o and 'cached_input_tokens' in o:
+                tot_in+=o.get('input_tokens',0); tot_cached+=o.get('cached_input_tokens',0); tot_out+=o.get('output_tokens',0)
+            for v in o.values(): walk(v)
+        elif isinstance(o,list):
+            for v in o: walk(v)
+    walk(j)
+rate = (tot_cached/tot_in*100) if tot_in else 0
+print(f"Session: {f.split('/')[-1][:40]}")
+print(f"Model:   {model}")
+print(f"Input tokens:  {tot_in:,}")
+print(f"Cached (hit):  {tot_cached:,}  ({rate:.0f}% cache hit)")
+print(f"Output tokens: {tot_out:,}")
+if model.startswith('muse'):
+    cost=(tot_in-tot_cached)*1.25/1e6 + tot_cached*0.15/1e6 + tot_out*4.25/1e6
+    nocache=tot_in*1.25/1e6 + tot_out*4.25/1e6
+    print(f"Est cost:      ${cost:.4f}   (vs ${nocache:.4f} with no caching — saved ${nocache-cost:.4f})")
+if rate<20 and tot_in>50000: print("⚠️  Low cache hit — prefix not being reused / cache TTL expiring")
+elif rate>=50: print("✅ Good cache reuse")
+PY

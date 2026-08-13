@@ -62,7 +62,7 @@ print(f"    wrote {len(managed)} managed keys (preserved others)")
 PY
 
 echo "--> Installing commands (tn, tnx, ta, tk, tclean)"
-for cmd in tn tnx ta tk tclean; do
+for cmd in tn tnx tngr tngm tnm tnds ta tk tclean; do
   cp "$SRC/bin/$cmd" "$BIN/$cmd"
   chmod +x "$BIN/$cmd"
 done

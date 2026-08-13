@@ -24,7 +24,7 @@ set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
 set -g @continuum-restore 'on'
-set -g @resurrect-processes 'claude ssh'
+set -g @resurrect-processes '~claude ~codex ~kilo ~grok ~gemini ssh'
 set -g @resurrect-capture-pane-contents 'on'
 
 run '~/.tmux/plugins/tpm/tpm'
