@@ -10,12 +10,13 @@
 set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TASKS_FILE="${TASKS_FILE:-$HOME/.vscode/tasks.json}"
-LOCK_DIR="${VSCODECONFIG_LOCK_DIR:-$HOME/.vscodeconfig/.sync-lock}"
+LOCK_FILE="${VSCODECONFIG_LOCK_FILE:-$HOME/.vscodeconfig/.sync.lock}"
 
-mkdir -p "$(dirname "$LOCK_DIR")"
-if mkdir "$LOCK_DIR" 2>/dev/null; then
-  trap 'rmdir "$LOCK_DIR"' EXIT
-else
+# flock is released by the kernel when the process dies, so a killed sync
+# (reboot, SIGKILL) can never leave a stale lock that blocks all future syncs.
+mkdir -p "$(dirname "$LOCK_FILE")"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
   echo "Another VScodeconfig sync is running"
   exit 0
 fi
