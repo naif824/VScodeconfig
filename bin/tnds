@@ -16,7 +16,7 @@ if tmux has-session -t "=$NAME" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$NAME" || { echo "tmux new-session failed"; exit 1; }
-tmux send-keys -t "$NAME" "kilo -m deepseek/deepseek-v4-flash" Enter
+tmux send-keys -t "$NAME" "kilo -m deepseek/deepseek-v4-pro" Enter
 
 ( bash "$SCRIPTS/sync-state.sh" >/dev/null 2>&1 & )
 
