@@ -14,8 +14,8 @@ set -g allow-rename off
 
 # Auto-regenerate VS Code tasks.json and save resurrect state whenever tmux
 # sessions change.
-set-hook -g session-created 'run-shell "bash $HOME/.vscodeconfig/scripts/sync-state.sh >/dev/null 2>&1 &"'
-set-hook -g session-closed  'run-shell "bash $HOME/.vscodeconfig/scripts/sync-state.sh >/dev/null 2>&1 &"'
+set-hook -g session-created 'run-shell "bash __VSCODECONFIG_DIR__/scripts/sync-state.sh >/dev/null 2>&1 &"'
+set-hook -g session-closed  'run-shell "bash __VSCODECONFIG_DIR__/scripts/sync-state.sh >/dev/null 2>&1 &"'
 
 # Survive reboot: tmux-resurrect saves sessions; continuum auto-restores on server start.
 # Conversation IDs are replayed via the tasks.json fallback (claude --resume <id>),

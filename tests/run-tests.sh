@@ -61,21 +61,21 @@ PY
 
 test_tk_syncs_resurrect_after_kill() {
   local work="$TMP_ROOT/tk"
-  mkdir -p "$work/.vscodeconfig/scripts" "$work/.tmux/plugins/tmux-resurrect/scripts"
+  mkdir -p "$work/scripts" "$work/.tmux/plugins/tmux-resurrect/scripts"
   make_fake_tmux "$work"
-  cp "$ROOT/scripts/sync-state.sh" "$work/.vscodeconfig/scripts/sync-state.sh"
-  cat > "$work/.vscodeconfig/scripts/gen-tasks.sh" <<'SH'
+  cp "$ROOT/scripts/sync-state.sh" "$work/scripts/sync-state.sh"
+  cat > "$work/scripts/gen-tasks.sh" <<'SH'
 #!/bin/bash
 printf 'gen\n' >> "$HOME/sync.log"
 SH
-  chmod +x "$work/.vscodeconfig/scripts/"*.sh
+  chmod +x "$work/scripts/"*.sh
   cat > "$work/.tmux/plugins/tmux-resurrect/scripts/save.sh" <<'SH'
 #!/bin/bash
 printf 'save\n' >> "$HOME/sync.log"
 SH
   chmod +x "$work/.tmux/plugins/tmux-resurrect/scripts/save.sh"
 
-  HOME="$work" PATH="$work/bin:$PATH" TMUX_FAKE_KILLS="$work/kills.log" \
+  HOME="$work" VSCODECONFIG_SCRIPTS_DIR="$work/scripts" TMUX_FAKE_SESSIONS=other PATH="$work/bin:$PATH" TMUX_FAKE_KILLS="$work/kills.log" \
     bash "$ROOT/bin/tk" demo >/tmp/vscodeconfig-test.log
 
   grep -qx -- 'kill-session -t demo' "$work/kills.log" || fail "tmux kill-session was not called for demo"
@@ -111,7 +111,7 @@ test_tclean_detects_old_editor_task_shells() {
   local work="$TMP_ROOT/tclean-detect"
   mkdir -p "$work"
   cat > "$work/ps.txt" <<'EOF'
-100 1 /home/ft/.cursor-server/bin/node out/bootstrap-fork --type=ptyHost
+100 1 /home/user/.cursor-server/bin/node out/bootstrap-fork --type=ptyHost
 200 100 /bin/bash -c printf '\033]0;admin\007'; tmux attach -t admin 2>/dev/null || tmux new-session -s admin 'claude --dangerously-skip-permissions'
 300 100 /bin/bash -c printf '\033]0;aziz\007'; tmux has-session -t =aziz 2>/dev/null && tmux attach -t =aziz
 400 1 /bin/bash -c printf '\033]0;manual\007'; tmux attach -t manual 2>/dev/null || tmux new-session -s manual 'claude --dangerously-skip-permissions'
@@ -130,7 +130,7 @@ test_tclean_no_matches() {
   local work="$TMP_ROOT/tclean-none"
   mkdir -p "$work"
   cat > "$work/ps.txt" <<'EOF'
-100 1 /home/ft/.cursor-server/bin/node out/bootstrap-fork --type=ptyHost
+100 1 /home/user/.cursor-server/bin/node out/bootstrap-fork --type=ptyHost
 300 100 /bin/bash -c printf '\033]0;aziz\007'; tmux has-session -t =aziz 2>/dev/null && tmux attach -t =aziz
 EOF
 

@@ -7,13 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Runs in place from the checkout. `install.sh` no longer copies scripts to
+  `~/.vscodeconfig`; commands in `~/.local/bin` are symlinks into `bin/`, and
+  snapshots, logs and locks live in `state/` (gitignored).
+
 ### Fixed
+- Sessions closed before a reboot no longer come back. The boot guard used to
+  prefer the largest snapshot ever seen over the real pre-reboot one; it now
+  falls back only when the pre-reboot snapshot is blank.
+- Each Claude pane is saved with its own conversation id (read from
+  `~/.claude/sessions/<pid>.json`) instead of the newest one in the folder.
+- `sync-state.sh` never saves a snapshot when zero sessions remain.
 - Generated VS Code/Cursor auto-open tasks are now attach-only. They no longer
   run `tmux new-session` when `tmux attach` fails, preventing stale/orphan
   Cursor persistent terminal records from recreating sessions the user already
   exited or killed.
 
 ### Added
+- Reboot restore: `systemd/tmux.service` plus `prefer-good-snapshot.py`,
+  `inject-agent-sessions.py` and `relaunch-agents.py`, which bring tmux sessions
+  back after a reboot with each agent resumed on its own conversation.
 - `tclean`, a dry-run-first cleanup command for old Cursor/VS Code persistent
   task shells that still contain the obsolete `tmux attach ... || tmux new-session ...` fallback.
 - `LLM.md`, a guide for Claude/Gemini/Codex users and AI assistants working

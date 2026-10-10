@@ -8,7 +8,7 @@ if [ -z "${1:-}" ] || [[ "$1" == -* ]]; then
 fi
 
 NAME="$1"
-SCRIPTS="$HOME/.vscodeconfig/scripts"
+SCRIPTS="${VSCODECONFIG_SCRIPTS_DIR:-$(cd "$(dirname "$(readlink -f "$0")")/../scripts" && pwd)}"
 
 if tmux has-session -t "=$NAME" 2>/dev/null; then
   echo "Session '$NAME' already exists — use: ta $NAME"

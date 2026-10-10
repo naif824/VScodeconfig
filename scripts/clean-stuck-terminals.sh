@@ -106,7 +106,7 @@ printf '%s\n' "$matches" | awk -F '\t' '{print $1}' | while read -r pid; do
   kill "$pid" 2>/dev/null || true
 done
 
-SCRIPTS="${VSCODECONFIG_SCRIPTS_DIR:-$HOME/.vscodeconfig/scripts}"
+SCRIPTS="${VSCODECONFIG_SCRIPTS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 if [ -x "$SCRIPTS/sync-state.sh" ]; then
   bash "$SCRIPTS/sync-state.sh" >/dev/null 2>&1 || true
 fi

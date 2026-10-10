@@ -5,8 +5,9 @@
 # Idempotent: safe to re-run.
 #
 # Layout after install:
-#   $HOME/.local/bin/{tn,tnx,ta,tk,tclean} - shell commands
-#   $HOME/.vscodeconfig/scripts/*.sh       - worker scripts
+#   $HOME/.local/bin/{tn,tnx,ta,tk,tclean} - symlinks into this repo's bin/
+#   <this repo>/scripts/                   - worker scripts, run in place
+#   <this repo>/state/                     - snapshots, logs, locks (gitignored)
 #   $HOME/.vscode/tasks.json               - auto-generated from live tmux sessions
 #   $HOME/.tmux.conf                       - appends a managed block (if missing)
 #   crontab                                - 5-min refresh of tasks/resurrect state
@@ -14,7 +15,9 @@
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEST="${VSCODECONFIG_DEST:-$HOME/.vscodeconfig}"
+# Runs in place: everything executes from this checkout, nothing is copied to a
+# hidden folder (they used to be copied to ~/.vscodeconfig and drifted apart).
+DEST="$SRC"
 BIN="${VSCODECONFIG_BIN:-$HOME/.local/bin}"
 TMUX_CONF="$HOME/.tmux.conf"
 MARK="# --- VScodeconfig:"
@@ -24,12 +27,8 @@ echo "    package:   $SRC"
 echo "    dest:      $DEST"
 echo "    bin:       $BIN"
 
-mkdir -p "$DEST/scripts" "$BIN" "$HOME/.vscode"
-
-echo "--> Installing worker scripts"
-rm -f "$DEST/scripts/claude-session-map.sh"
-cp "$SRC/scripts/"*.sh "$DEST/scripts/"
-chmod +x "$DEST/scripts/"*.sh
+mkdir -p "$DEST/state" "$BIN" "$HOME/.vscode"
+chmod +x "$DEST/scripts/"*.sh "$DEST/scripts/"*.py
 
 echo "--> Merging workspace VS Code settings ($HOME/.vscode/settings.json)"
 # Window-scoped keys that make OSC-set tab titles + single-click focus work
@@ -61,10 +60,10 @@ with open(path, "w") as f:
 print(f"    wrote {len(managed)} managed keys (preserved others)")
 PY
 
-echo "--> Installing commands (tn, tnx, ta, tk, tclean)"
+echo "--> Linking commands (tn, tnx, ta, tk, tclean)"
 for cmd in tn tnx tngr tngm tnm tnds ta tk tclean; do
-  cp "$SRC/bin/$cmd" "$BIN/$cmd"
-  chmod +x "$BIN/$cmd"
+  chmod +x "$SRC/bin/$cmd"
+  ln -sfn "$SRC/bin/$cmd" "$BIN/$cmd"
 done
 
 echo "--> Updating ~/.tmux.conf"
@@ -78,7 +77,7 @@ if grep -qF "$MARK" "$TMUX_CONF"; then
   echo "    (removed old managed block)"
 fi
 echo "" >> "$TMUX_CONF"
-cat "$SRC/tmux.conf.snippet" >> "$TMUX_CONF"
+sed "s#__VSCODECONFIG_DIR__#$SRC#g" "$SRC/tmux.conf.snippet" >> "$TMUX_CONF"
 echo "    (appended fresh managed block)"
 
 # Reload so changes take effect without requiring kill-server
@@ -86,11 +85,21 @@ tmux source-file "$TMUX_CONF" >/dev/null 2>&1 || true
 
 echo "--> Installing cron entry (every 5 min)"
 CRON_LINE="*/5 * * * * /bin/bash $DEST/scripts/sync-state.sh >/dev/null 2>&1"
-# Strip any prior lines referencing either worker script, then append the one we want.
+INJECT_LINE="*/5 * * * * /usr/bin/python3 $DEST/scripts/inject-agent-sessions.py >> $DEST/state/inject.log 2>&1"
+# Strip any prior lines referencing the worker scripts, then append ours.
 ( crontab -l 2>/dev/null \
-    | grep -v -E 'sync-state\.sh|gen-tasks\.sh|claude-session-map\.sh' || true
+    | grep -v -E 'sync-state\.sh|gen-tasks\.sh|claude-session-map\.sh|inject-agent-sessions\.py' || true
   echo "$CRON_LINE"
+  echo "$INJECT_LINE"
 ) | crontab -
+
+echo "--> Installing reboot-restore unit (systemd --user)"
+if command -v systemctl >/dev/null 2>&1; then
+  mkdir -p "$HOME/.config/systemd/user"
+  sed "s#__VSCODECONFIG_DIR__#$SRC#g" "$SRC/systemd/tmux.service" > "$DEST/state/tmux.service"
+  ln -sfn "$DEST/state/tmux.service" "$HOME/.config/systemd/user/tmux.service"
+  systemctl --user daemon-reload && systemctl --user enable tmux.service >/dev/null 2>&1 || true
+fi
 
 echo "--> Installing tpm (tmux plugin manager) if missing"
 TPM_DIR="$HOME/.tmux/plugins/tpm"

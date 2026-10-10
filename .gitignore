@@ -3,3 +3,4 @@
 .DS_Store
 bin/bbcheck
 codex-config.meta.snippet
+state/

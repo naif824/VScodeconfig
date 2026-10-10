@@ -68,7 +68,7 @@ Generated user files:
 All state should flow through:
 
 ```bash
-bash ~/.vscodeconfig/scripts/sync-state.sh
+bash <repo>/scripts/sync-state.sh
 ```
 
 That script:
@@ -105,7 +105,7 @@ tmux ls
 Regenerate all editor restore state:
 
 ```bash
-bash ~/.vscodeconfig/scripts/sync-state.sh
+bash <repo>/scripts/sync-state.sh
 ```
 
 Inspect generated tasks:

@@ -10,7 +10,7 @@
 set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TASKS_FILE="${TASKS_FILE:-$HOME/.vscode/tasks.json}"
-LOCK_FILE="${VSCODECONFIG_LOCK_FILE:-$HOME/.vscodeconfig/.sync.lock}"
+LOCK_FILE="${VSCODECONFIG_LOCK_FILE:-$SCRIPT_DIR/../state/.sync.lock}"
 
 # flock is released by the kernel when the process dies, so a killed sync
 # (reboot, SIGKILL) can never leave a stale lock that blocks all future syncs.

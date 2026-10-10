@@ -1,0 +1,24 @@
+[Unit]
+Description=tmux server (resurrect/continuum auto-restore on boot)
+Documentation=https://github.com/tmux-plugins/tmux-continuum
+After=default.target
+
+[Service]
+TimeoutStartSec=120
+Type=forking
+# Start a fresh server with a placeholder session; sourcing ~/.tmux.conf loads
+# TPM -> continuum, which sees @continuum-restore 'on' and replays the last save.
+ExecStartPre=/usr/bin/python3 __VSCODECONFIG_DIR__/scripts/prefer-good-snapshot.py
+ExecStart=/usr/bin/tmux new-session -d -s _boot
+# resurrect cannot restore a pane's process without an attached client;
+# this launches the saved commands into the restored (empty) panes.
+ExecStartPost=/usr/bin/python3 __VSCODECONFIG_DIR__/scripts/relaunch-agents.py
+ExecStop=/usr/bin/tmux kill-server
+# Do NOT let systemd reap the tmux server's process tree (panes) when the unit
+# settles; the daemonized server is intentionally outside systemd's tracking.
+KillMode=none
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

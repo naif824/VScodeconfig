@@ -197,7 +197,7 @@ task exits instead of recreating the tmux session.
   tk
   tclean
 
-~/.vscodeconfig/scripts/
+<repo>/scripts/
   gen-tasks.sh
   sync-state.sh
 
@@ -237,7 +237,7 @@ tmux ls
 Regenerate editor tasks manually:
 
 ```bash
-bash ~/.vscodeconfig/scripts/sync-state.sh
+bash <repo>/scripts/sync-state.sh
 ```
 
 Inspect generated tasks:
@@ -278,7 +278,7 @@ Default tmux prefix is `Ctrl+b`.
 
 ```bash
 rm -f ~/.local/bin/{tn,tnx,ta,tk,tclean}
-rm -rf ~/.vscodeconfig
+rm -rf <repo>/state
 rm -f ~/.vscode/tasks.json
 crontab -l | grep -v -E 'sync-state\.sh|gen-tasks\.sh|claude-session-map\.sh' | crontab -
 ```
