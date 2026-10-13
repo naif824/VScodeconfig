@@ -1,0 +1,12 @@
+#!/bin/bash
+# tnmc — new tmux session running Muse Code (Meta's native agent CLI on Muse Spark 1.2) in YOLO.
+# --yolo disables approval + sandbox and trusts the workspace. Use in trusted / git-clean dirs.
+# Usage: tnmc <session-name>
+if [ -z "${1:-}" ] || [[ "$1" == -* ]]; then echo "Usage: tnmc <session-name>"; exit 1; fi
+NAME="$1"
+if tmux has-session -t "=$NAME" 2>/dev/null; then echo "Session '$NAME' exists — use: ta $NAME"; exit 1; fi
+tmux new-session -d -s "$NAME" || { echo "tmux new-session failed"; exit 1; }
+tmux send-keys -t "$NAME" "~/.local/bin/muse --yolo --model muse-spark-1.2 --reasoning-effort high" Enter
+printf '\033[0;0H'
+printf '\033]0;%s\007' "$NAME"
+tmux attach -t "$NAME"
